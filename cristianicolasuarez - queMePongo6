@@ -1,0 +1,158 @@
+//Como usuarie de QueMePongo quiero tener una sugerencia diaria de qué ponerme y que  todas las mañanas, diariamente, esta sea actualizada 
+
+Para este item deberia de existir una clase que se encargue de ejecutar dicha accion cada un cierto tiempo (todos los dias a la mañana)
+
+public class Usuario
+{
+	String  nombre
+	Ciudad ciudad
+	List<Atuendo> sugerenciaDiaria
+	
+	public void setSugerenciaDiaria(List<Atuendo> sugerencia){sugerenciaDiaria=sugerencia;}
+}
+
+public class Planificador 
+{
+	List<Tarea> tareas;
+	//Una tarea podria ser SugerenciaDiara como tambien ControlAlerta
+	
+	void ejecutarTareas()
+	{
+		//A groso modo ejecuto todas las tareas sin tener en consideracion el tiempo y la planificacion de las mismas
+		tareas.forAll({tarea->tarea.ejectar()});
+	}
+}
+
+public interface Tarea
+{
+	void ejecutar();
+}
+
+//Como empleade de QueMePongo quiero poder disparar el cálculo de sugerencias diarias para todos los usuarios para poder ejecutar esta acción 
+//a principio de cada día.
+
+El planificador servira para disparar la accion al principio de cada dia.
+Para solucionar el que se haga para cada uno de los usuarios, creo la clase UsuarioRepository que almacenara/gestionara/devuelve usuarios segun corresponda
+
+public class UsuarioRepository
+{
+	//Singleton
+	List<Usuario> usuarios;
+	
+	void  agregarUsuario(Usuario usuario){usuarios.add(usuario);}
+	void  eliminarUsuario(Usuario usuario){usuarios.remove(usuario);}
+	List<Usuario> obtenerUsuarios(){return usuarios;}
+}
+
+Ahora que podemos obtener todos los usuarios, la tarea se puede ejectutar para todos los usuarios
+
+pubic class SugerenciaDiaria() implements Tarea
+{
+	void ejecutar()
+	{
+		//EN ESTE CASO USAMOS SUGERIR ATUENDO, EN LAS OTRAS TAREAS SERA DIFERENTE.
+		UsuarioRepository.obtenerUsuarios.forAll({usuario->usuario.setSugerenciaDiaria(usuario.sugerirAtuendo(guardarropas, ciudad))});
+		//Obtenemos de cada uno de los usuarios una sugerencia, dado un guardarropas que ahora no nos interesa y la ciudad del usuario
+		//Una vez obtenido la gurenecia la seteamos como sugerencia diaria.
+	}
+}
+
+//Como usuarie de QueMePongo, quiero poder conocer cuáles son las últimas alertas meteorológicas publicadas en el sistema para estar informado 
+//(pudiendo verlas, por ejemplo, al entrar en quemepongo.com)
+
+En este item se modifica el ProveedorClima para que ademas de poder obtenerClima se pueda obtenerAlertas.
+
+
+public interface ProveedorClima
+{
+    public Clima obtenerClima(Ciudad ciudad);
+	public String obtenerAlertas(Ciudad ciudad);
+}
+
+
+//Como empleade de QueMePongo, necesito poder disparar un proceso que consulte y actualice la lista de alertas publicadas en el sistema para 
+//tener control sobre cuándo se publican las mismas 
+
+//Como usuarie de QuéMePongo quiero que se actualice mi sugerencia diaria con las condiciones climáticas actualizadas cuando se genere algún 
+//alerta durante el día 
+
+Recordemos que esta tarea se ejecutara cada un cierto tiempo en busca de alguna alerta.
+
+pubic class ControlAlerta() implements Tarea
+{
+	String tormenta="Se detecto una alerta por TORMENTA, recuerde utilizar paraguas";
+	String granizo="Se detecto una alerta por GRANIZO, evite salir con el auto";
+	void ejecutar()
+	{
+		//EN ESTE CASO UTILIZAMOS AL PROVEEDOR DE CLIMA DIRECTAMENTE
+		UsuarioRepository.obtenerUsuarios.forAll({usuario->notificar(ProveedorClima.obtenerAlertas(usuario.getCiudad(),usuario))})
+	}
+	
+	void notificar(List<String> alertas, Usuario usuario)
+	{
+		if(alertas.contains("STORM")
+		{
+			usuario.notificar(tormenta);
+			usuario.setSugerenciaDiaria(/*OBTENER NUEVA SUGERENCIA el clima habra cambiado notoriamente por la alerta*/);
+		}
+		if(alertas.contains("HAIL")
+		{
+			usuario.notificar(granizo);
+			usuario.setSugerenciaDiaria(/*OBTENER NUEVA SUGERENCIA el clima habra cambiado notoriamente por la alerta*/);
+		}
+	}
+}
+
+//Como usuarie de QueMePongo quiero tener la posibilidad de que ante una alerta de tormenta la app me notifique que debo llevarme también un paraguas 
+//Como usuarie de QueMePongo quiero que ante una alerta meteorológica de granizo la app  me notifique que evite salir en auto
+//Como usuarie de QueMePongo quiero poder recibir un mail avisándome si se generó algún alerta meteorológico y cuál
+
+Como se ve en el ultimo punto el usuario recibira estas noificaciones siempre y cuando tenga algun medio de notificacion activado.
+
+public interface Notificacion
+{
+	void notificar(String texto);
+}
+
+public class NotificacionMail implements Notificacion
+{
+	String mail;
+	public void notificar(String texto)
+	{
+		MailSender.send(mail, texto);
+	}
+}
+
+public class NotificacionPantalla implements Notificacion
+{
+	public void notificar(String texto);
+}
+
+//Como usuarie de QuéMePongo quiero poder configurar cuáles de estas acciones (notificaciones, mail, recálculo)  quiero que se ejecuten y cuáles no,
+//además de soportar nuevas acciones a futuro. (No nos interesará, sin embargo, soportar nuevas alertas)
+
+Los distintos tipos de notificaciones que el usuario desee recibir estaran guardadas en Usuario
+Dandole la posibilidad de agregar o quitar maneras de notificacion.
+Cada una de las tareas, al ejecutarse y obtener las condiciones climaticas disparan la notificacion a los usuarios, y en el caso
+de la sugerencia diaria tambien dispara el axtualizar la misma.
+
+public class Usuario
+{
+	String  nombre
+	String mail
+	Ciudad ciudad
+	List<Notificacion> notificaciones
+	
+	//EJEMPLO: usuario.agregarNotificacion(new NotificacionMail(usuario.mail)); 
+	//EJEMPLO: usuario.agregarNotificacion(new NotificacionPantalla());
+	void agregarNotificacion( Notificacion notificacion){notificaciones.add(notificacion);}
+	void  quitarrNotificacion( Notificacion notificacion){notificaciones.remove(notificacion);}
+	
+	void notificar(String texto)
+	{
+		//La manera de notificar el usuario sera ejectutando cada una de las notificaciones que tenga asociadas. 
+		//Si no tiene notificaciones activadas no le llegaran.
+		
+		notificaciones.forAll({notificacion.notificar(texto});
+	}
+}
